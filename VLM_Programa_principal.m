@@ -1,52 +1,67 @@
-%% GRUPO 13 Alonso Lucas, Sara; Errasti Odriozola, Jon; 
-%%          Sarabia Vargas, Alejandro; Terreros Sanchez, Carlos
+%% Vortex-Lattice Method for Incompressible Aerodynamics Analysis
 
-% Este codigo calcula la aerodinamica estacionaria incompresible para un
-% ala con una geometria dada mediante el metodo Vortex-Lattice. El codigo
-% esta predeterminado para calcular las graficas de los coeficientes
-% aerodinamicos respecto al angulo de ataque, alpha. No obstante, el usuario
-% puede cambiar el bucle de resolucion de las graficas al inicio del codigo
-% y obtener las mismas graficas dependientes del angulo de flecha, psi.
-% (linea 51-52 y Representacion a partir de la linea 333)
- 
+% Authors: Alonso Lucas, Sara; Errasti Odriozola, Jon;
+%          Sarabia Vargas, Alejandro; Terreros Sanchez, Carlos
+
+% Description:
+% This MATLAB code implements the Vortex-Lattice method to analyze the
+% incompressible steady-state aerodynamics of a given wing geometry. The
+% code calculates and visualizes aerodynamic coefficients, lift and drag
+% distributions, and other relevant parameters for a specified range of
+% angles of attack (alpha) or sweep angles (psi). Users can customize the
+% angle sweep and analyze the aerodynamic behavior of different wing
+% geometries.
+
+% Usage:
+% 1. Configure the parameters and ranges for analysis in the 'main' function.
+% 2. Run the script to perform aerodynamic calculations and generate results.
+
+% Note:
+% This code is part of a collaborative project for [Course/Research Name].
+% Please refer to the respective documentation for detailed insights and
+% considerations for the Vortex-Lattice method and its application.
+
+% Dependencies:
+% - LeyBiotSavart3D: A custom function for vortex panel integration.
+
+% Last Updated: [Date]
 
 clear
 
 %% INPUT (MENU)
 
-b = 14;  %Envergadura alar
-cr = 5;  %Cuerda en raiz del ala
-E = 0.5;  %Valor estrechamiento del ala (0-1)
-psi=40*pi/180; %Angulo flecha del ala (rad)  %psig=[0:5:40]*pi/180
-alphag=[2]*pi/180;   %Angulo de ataque(rad)  %alpha=5*pi/180  adaptar este dato invariable para el estudio de variacion de psi
-U_inf=200; %Velocidad de vuelo (m/s)
-Ny = 20;  %Num. divisiones eje y en ala
-Nx = 10;  %Num. divisiones eje x en ala
-h=0;      %Altura de vuelo (m)
+b = 14;     % Wingspan
+cr = 5;     % Root chord
+E = 0.5;    % Wing taper ratio (0-1)
+psi = 40*pi/180;    % Wing sweep angle (radians)
+alphag = linspace(0,10,1)*pi/180;    % Angle of attack (radians)
+U_inf = 200;    % Flight velocity (m/s)
+Ny = 20;    % Number of divisions along y-axis
+Nx = 10;    % Number of divisions along x-axis
+h = 0;      % Flight altitude (m)
 
-%% Parametros del aire - Condiciones ISA
+%% Air Parameters - ISA Conditions
 
-Tamb = 288.15-0.0065*h; %Temperatura ambiental (K)
-Pamb = 101325*(Tamb/288.15)^(9.81/(287.075*0.0065)); %Presion ambiental (Pa)
-ro = Pamb/(287.074*Tamb); %Densidad del aire (kg/m^3)
+Tamb = 288.15 - 0.0065 * h;    % Ambient temperature (K)
+Pamb = 101325 * (Tamb / 288.15)^(9.81 / (287.075 * 0.0065));    % Ambient pressure (Pa)
+ro = Pamb / (287.074 * Tamb);    % Air density (kg/m^3)
 
-%% CALCULOS PREVIOS
+%% PRELIMINARY CALCULATIONS
 
-ct = E*cr;  %Cuerda en punta
-b2 = b/2;  %Mitad de envergadura
-S=cr*b*(1+E)/2;  %Superficie alar
-AR=b^2/S;  %AR 
-cp = S/b;  %Cuerda promedio
+ct = E * cr;    % Tip chord
+b2 = b / 2;     % Half wingspan
+S = cr * b * (1 + E) / 2;    % Wing area
+AR = b^2 / S;    % Aspect ratio
+cp = S / b;     % Mean chord
 
 %% NACA 2412
 
-m = 2/100;
-p = 4/10;
-e = 12/100;
-
+m = 2 / 100;
+p = 4 / 10;
+e = 12 / 100;
 %% DESARROLLO
 
-    for k=1:length(alphag)
+for k=1:length(alphag)
         alpha=alphag(k);
        %  for l=1:length(psig)                  
        % psi=psig(k);
@@ -59,15 +74,14 @@ for i=1:Ny+1
     c_y(i)=((ct-cr)/b2)*abs(yt(i))+cr;
 end
 
-%% Borde de ataque y borde salida
+%% Leading and trailing edge
 
 for i=1:Ny+1
     x_ataque(i)=tan(psi)*abs(yt(i));
     x_salida(i)=x_ataque(i)+c_y(i);
 end
 
-%% Mallado primario de paneles 1234
-
+%% Primary panel meshing
 for j=1:Ny+1
     for i=1:Nx+1
         x_v(i,j)=x_ataque(j)+(x_salida(j)-x_ataque(j))*(i-1)/Nx;
